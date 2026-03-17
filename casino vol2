@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <title>🍬 Bonbónové Kasino</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #1a3a32; color: white; text-align: center; margin: 0; }
+        nav { background: #0e241f; padding: 15px; display: flex; justify-content: center; gap: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        .nav-btn { background: #2d5a4c; border: none; color: white; padding: 10px 20px; cursor: pointer; border-radius: 5px; }
+        .nav-btn.active { background: #e67e22; }
+        
+        .status-bar { background: #2c3e50; padding: 10px; font-size: 1.2em; }
+        .game-container { max-width: 600px; margin: 30px auto; background: #2d5a4c; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: none; }
+        .game-container.active { display: block; }
+
+        .cards, .slot-machine { font-size: 30px; margin: 15px 0; min-height: 45px; }
+        input[type="number"] { width: 80px; padding: 8px; border-radius: 5px; border: none; font-size: 16px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; background: #e67e22; color: white; margin: 5px; transition: 0.3s; }
+        button:hover { background: #d35400; }
+        button:disabled { background: #7f8c8d; cursor: not-allowed; }
+        .message { font-size: 1.2em; font-weight: bold; color: #f1c40f; margin: 15px 0; min-height: 1.5em; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <button class="nav-btn active" onclick="showGame('blackjack')">🃏 Blackjack</button>
+    <button class="nav-btn" onclick="showGame('ruleta')">🎡 Ruleta</button>
+    <button class="nav-btn" onclick="showGame('automaty')">🎰 Automaty</button>
+</nav>
+
+<div class="status-bar">
+    Zůstatek: <span id="balance">500</span> 🍬 | 
+    Sázka: <input type="number" id="bet-input" value="10" min="1"> 🍬
+</div>
+
+<div id="blackjack" class="game-container active">
+    <h1>Blackjack</h1>
+    <div>Dealer: <span id="bj-dealer-score">?</span><div id="bj-dealer-cards" class="cards"></div></div>
+    <hr>
+    <div>Ty: <span id="bj-player-score">0</span><div id="bj-player-cards" class="cards"></div></div>
+    <div id="bj-msg" class="message">Zvol sázku a hraj!</div>
+    <button onclick="bjStart()">Rozdat karty</button>
+    <button id="bj-hit" onclick="bjHit()" disabled>Hit</button>
+    <button id="bj-stay" onclick="bjStay()" disabled>Stay</button>
+</div>
+
+<div id="ruleta" class="game-container">
+    <h1>Ruleta</h1>
+    <p>Vsaď si na barvu (výhra 2x):</p>
+    <div id="rul-msg" class="message">Vyber barvu!</div>
+    <button style="background: #c0392b" onclick="playRoulette('red')">Červená</button>
+    <button style="background: #2c3e50" onclick="playRoulette('black')">Černá</button>
+    <button style="background: #27ae60" onclick="playRoulette('green')">Zelená (14x)</button>
+</div>
+
+<div id="automaty" class="game-container">
+    <h1>Sweets Slots</h1>
+    <div class="slot-machine" id="slots-display">🍭 🍭 🍭</div>
+    <div id="slots-msg" class="message">Zkus štěstí!</div>
+    <button onclick="playSlots()">Zatočit (Spin)</button>
+</div>
+
+<script>
+    let candies = 500;
+    let currentBet = 10;
+
+    // --- POMOCNÉ FUNKCE ---
+    function updateBalance(amount) {
+        candies += amount;
+        document.getElementById('balance').innerText = candies;
+    }
+
+    function getBet() {
+        let val = parseInt(document.getElementById('bet-input').value);
+        if (isNaN(val) || val <= 0) return 0;
+        if (val > candies) return -1;
+        return val;
+    }
+
+    function showGame(gameId) {
+        document.querySelectorAll('.game-container').forEach(g => g.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(gameId).classList.add('active');
+        event.target.classList.add('active');
+    }
+
+    // --- BLACKJACK LOGIKA ---
+    let bjDeck = [], bjPlayer = [], bjDealer = [], bjActive = false;
+
+    function bjStart() {
+        let bet = getBet();
+        if (bet <= 0) return alert("Neplatná sázka!");
+        if (bet === -1) return alert("Nemáš dost bonbónů!");
+        
+        updateBalance(-bet);
+        bjDeck = ['2','3','4','5','6','7','8','9','10','J','Q','K','A','2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+        bjPlayer = [drawCard(), drawCard()];
+        bjDealer = [drawCard(), drawCard()];
+        bjActive = true;
+        document.getElementById('bj-msg').innerText = "Hraješ o " + bet + " 🍬";
+        toggleBjBtns(true);
+        renderBj(false);
+    }
+
+    function drawCard() { return bjDeck.splice(Math.floor(Math.random() * bjDeck.length), 1)[0]; }
+    
+    function getScore(hand) {
+        let s = hand.reduce((a, c) => a + (['J','Q','K'].includes(c) ? 10 : (c==='A' ? 11 : parseInt(c))), 0);
+        let aces = hand.filter(c => c === 'A').length;
+        while (s > 21 && aces > 0) { s -= 10; aces--; }
+        return s;
+    }
+
+    function renderBj(done) {
+        document.getElementById('bj-player-cards').innerText = bjPlayer.join(' ');
+        document.getElementById('bj-player-score').innerText = getScore(bjPlayer);
+        document.getElementById('bj-dealer-cards').innerText = done ? bjDealer.join(' ') : bjDealer[0] + ' 🂠';
+        document.getElementById('bj-dealer-score').innerText = done ? getScore(bjDealer) : '?';
+    }
+
+    function bjHit() {
+        bjPlayer.push(drawCard());
+        if (getScore(bjPlayer) > 21) endBj("Příliš moc! Dealer bere sázku.");
+        renderBj(false);
+    }
+
+    function bjStay() {
+        while (getScore(bjDealer) < 17) bjDealer.push(drawCard());
+        let p = getScore(bjPlayer), d = getScore(bjDealer), bet = getBet();
+        if (d > 21 || p > d) { endBj("Vyhráváš " + (bet*2) + " 🍬!"); updateBalance(bet * 2); }
+        else if (d > p) { endBj("Dealer vyhrál."); }
+        else { endBj("Remíza - bonbóny vráceny."); updateBalance(bet); }
+        renderBj(true);
+    }
+
+    function endBj(msg) {
+        document.getElementById('bj-msg').innerText = msg;
+        toggleBjBtns(false);
+    }
+
+    function toggleBjBtns(on) {
+        document.getElementById('bj-hit').disabled = !on;
+        document.getElementById('bj-stay').disabled = !on;
+    }
+
+    // --- RULETA LOGIKA ---
+    function playRoulette(choice) {
+        let bet = getBet();
+        if (bet <= 0 || bet === -1) return alert("Zkontroluj sázku!");
+        updateBalance(-bet);
+        
+        const colors = ['red', 'black', 'red', 'black', 'red', 'black', 'green'];
+        const result = colors[Math.floor(Math.random() * colors.length)];
+        
+        let msg = "Padla " + (result === 'red' ? 'Červená' : (result === 'black' ? 'Černá' : 'Zelená')) + ". ";
+        if (choice === result) {
+            let win = result === 'green' ? bet * 14 : bet * 2;
+            msg += "Vyhráváš " + win + " 🍬!";
+            updateBalance(win);
+        } else {
+            msg += "Prohrál jsi.";
+        }
+        document.getElementById('rul-msg').innerText = msg;
+    }
+
+    // --- AUTOMATY LOGIKA ---
+    function playSlots() {
+        let bet = getBet();
+        if (bet <= 0 || bet === -1) return alert("Zkontroluj sázku!");
+        updateBalance(-bet);
+
+        const icons = ['🍭', '🍬', '🍩', '🍫', '🍒'];
+        const r1 = icons[Math.floor(Math.random() * icons.length)];
+        const r2 = icons[Math.floor(Math.random() * icons.length)];
+        const r3 = icons[Math.floor(Math.random() * icons.length)];
+
+        document.getElementById('slots-display').innerText = `${r1} ${r2} ${r3}`;
+
+        if (r1 === r2 && r2 === r3) {
+            let win = bet * 10;
+            document.getElementById('slots-msg').innerText = "JACKPOT! Vyhráváš " + win + " 🍬";
+            updateBalance(win);
+        } else if (r1 === r2 || r2 === r3 || r1 === r3) {
+            let win = Math.floor(bet * 1.5);
+            document.getElementById('slots-msg').innerText = "Malá výhra: " + win + " 🍬";
+            updateBalance(win);
+        } else {
+            document.getElementById('slots-msg').innerText = "Zkus to znovu.";
+        }
+    }
+</script>
+
+</body>
+</html>
