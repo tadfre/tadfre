@@ -17,7 +17,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden; /* Pro létající bonbóny */
+            overflow: hidden; 
         }
 
         /* Hlavní kontejner s neonovým efektem */
@@ -86,6 +86,25 @@
             box-shadow: 0 2px 0 #a34000, 0 3px 10px rgba(0,0,0,0.6);
         }
 
+        /* Odkaz na projekt pod kasinem */
+        .project-link {
+            margin-top: 35px;
+            font-size: 1em;
+            color: #ecf0f1;
+        }
+
+        .project-link a {
+            color: #f1c40f;
+            text-decoration: none;
+            font-weight: bold;
+            border-bottom: 1px dashed #f1c40f;
+        }
+
+        .project-link a:hover {
+            color: #ffffff;
+            border-bottom: 1px solid #ffffff;
+        }
+
         /* Animace pulzování nadpisu */
         @keyframes glow {
             from { text-shadow: 0 0 10px rgba(241, 196, 15, 0.7), 2px 2px 0px #c0392b; }
@@ -107,7 +126,6 @@
             100% { transform: translateY(-10vh) rotate(360deg); }
         }
 
-        /* Responzivita pro mobily */
         @media (max-width: 600px) {
             .welcome-container { padding: 30px; width: 80%; }
             h1 { font-size: 2.5em; letter-spacing: 2px; }
@@ -123,33 +141,34 @@
     <div class="welcome-container">
         <h1>CASINO BONBON</h1>
         <h2>Hraj a vyhraj!</h2>
+        
         <a href="kasino.html" class="enter-btn">Vstoupit do hry</a>
+
+        <div class="project-link">
+            Prohlédněte si můj projekt: <a href="cpp.html">Město Polička</a>
+        </div>
     </div>
 
     <script>
-        // Funkce pro vygenerování létajících bonbónů na pozadí
         function createCandies() {
             const container = document.getElementById('candy-wrap');
             const candyTypes = ['🍬', '🍭', '🍩', '🍫', '🍒', '🐻'];
-            const candyCount = 15; // Kolik bonbónů chceme
+            const candyCount = 15; 
 
             for (let i = 0; i < candyCount; i++) {
                 const candy = document.createElement('div');
                 candy.className = 'candy';
                 candy.innerText = candyTypes[Math.floor(Math.random() * candyTypes.length)];
                 
-                // Náhodná pozice a rychlost
                 candy.style.left = Math.random() * 100 + 'vw';
-                candy.style.animationDuration = (Math.random() * 10 + 5) + 's'; // 5-15s
+                candy.style.animationDuration = (Math.random() * 10 + 5) + 's'; 
                 candy.style.animationDelay = (Math.random() * 5) + 's';
-                candy.style.fontSize = (Math.random() * 1.5 + 1) + 'em'; // Různé velikosti
+                candy.style.fontSize = (Math.random() * 1.5 + 1) + 'em'; 
 
                 container.appendChild(candy);
-                <p>Prohlédněte si můj projekt: <a href="cpp.html">Město Polička</a></p>
             }
         }
 
-        // Spustit generování po načtení stránky
         window.onload = createCandies;
     </script>
 </body>
